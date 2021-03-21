@@ -73,8 +73,10 @@
   {\bf Let the given problem be as follows:}
   \begin{center}
     \itshape
-    A balanced three phase voltage is applied to a Y-connected load with ungrounded 
-    neutral. The three phase load consists of three mutually-coupled reactances.
+    A balanced three phase voltage of 120 V line to neutral is applied to a 
+    Y-connected load with ungrounded neutral. The three phase load consists 
+    of three mutually-coupled reactances. Each phase has a series reactance of
+    $Z_s = j12 \Omega$, and the mutual coupling between phases is $Z_m = j4 \Omega$.
   \end{center}
   \begin{enumerate}
     \itshape
@@ -84,12 +86,24 @@
 
   \section{Theoretical Background}
   Shown below is a 3-phase supply connected to a Y-connected load.
+  Each of the voltages $V_1$, $V_2$ and $V_3$ represents the phase voltage
+  which are 120 degrees out of phase with each other.
+  The impedances are represented by $Z_1$, $Z_2$ and $Z_3$.
+
   \begin{figure}[H]
     \centering
     \includegraphics[width=5in]{img/y-load.png}
     \caption{Y-connected load with ungrounded neutral.}
     \label{yload}
   \end{figure}
+
+    \subsection{Mesh Analysis}
+    The Mesh-Current Method, also known as the Loop Current Method, 
+    is quite similar to the Branch Current method in that it uses simultaneous 
+    equations, Kirchhoff’s Voltage Law, and Ohm’s Law to determine unknown 
+    currents in a network. It differs from the Branch Current method in that 
+    it does not use Kirchhoff’s Current Law, and it is usually able to solve 
+    a circuit with less unknown variables and less simultaneous equations.
 
     \pagebreak
     \subsection{Sequence Components}
@@ -173,13 +187,54 @@
   \pagebreak
   \section{Implementation}
   \begin{lstlisting}
+    % To write a MATLAB program to determine line currents to a Y-connected 
+    % load by mesh analysis and by using symmetrical components.
+
+    % 17BEE012 - Alisamar Husain
+
+    Vp = 120;       % 3-phase Supply Voltage
     
+    Zs = 1j*12;     % Branch series reactance
+    Zm = 1j*4;      % Branch mutual reactance
+
+    % 1. Line currents by mesh analysis
+    disp('1. Line currents by mesh analysis')
+    Vl=sqrt(3)*Vp;
+
+    Z = [ (Zs-Zm) -(Zs-Zm) 0
+          0 (Zs-Zm) -(Zs-Zm)
+          1 1 1];
+
+    V = [ Vl*(cos(pi/6) + 1j*sin(pi/6))
+          Vl*(cos(-pi/2) + 1j*sin(-pi/2))
+          0];
+
+    Iabc = Z \ V;
+    disp(Iabc)
+
+    % 2. Line currents by symmetric components
+    disp('2. Line currents by symmetric components')
+    a = cos(2*pi/3)+ 1j*sin(2*pi/3);
+
+    A = [ 1 1 1; 
+          1 a^2 a; 
+          1 a a^2];
+      
+    Z012 = [  Zs+2*Zm 0 0
+              0 Zs-Zm 0
+              0 0 Zs-Zm];
+
+    V012 = [0; Vp; 0];
+    I012 = Z012 \ V012;
+
+    Iabc = A * I012;
+    disp(Iabc)
   \end{lstlisting}
 
   \section{Observations}
   \begin{figure}[H]
     \centering
-    % \includegraphics{img/run.png}
+    \includegraphics{img/run.png}
     \caption{Result in MATLAB}
     \label{result}
   \end{figure}
@@ -187,5 +242,18 @@
   is shown in figure \ref{result}.
 
   \section{Result}
+  The line currents for the given problem {\bf by mesh analysis} are found to be
+  \begin{center}
+    0.0000 -15.0000i A\\
+    -12.9904 + 7.5000i A\\
+    12.9904 + 7.5000i A
+  \end{center}
+  and line currents for {\bf by symmetric components} are found to be
+  \begin{center}
+    0.0000 -15.0000i A\\
+    -12.9904 + 7.5000i A\\
+    12.9904 + 7.5000i A
+  \end{center}
+  It is observed that identical values are obtained by both methods.
 
 \end{document}

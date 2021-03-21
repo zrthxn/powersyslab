@@ -1,36 +1,42 @@
-% Receiving end voltage, power and voltage regulation of
-% 3-phase medium transmission line.
+% To write a MATLAB program to determine line currents to a Y-connected 
+% load by mesh analysis and by using symmetrical components.
 
 % 17BEE012 - Alisamar Husain
 
-Vs = 120;     % Sending voltage in kV
-Ss = 17.12;   % Sending power in MVA
+Vp = 120;       % 3-phase Supply Voltage
 
-Zp  = 0.017 + 0.12i; % Impedance per km
-Yp  = 1.2e-6i;       % Admittance per km
-len = 100;           % Length in km
+Zs = 1j*12;     % Branch series reactance
+Zm = 1j*4;      % Branch mutual reactance
 
-% ABCD Parameters
-Z = len * Zp;
-Y = len * Yp;
+% 1. Line currents by mesh analysis
+disp('1. Line currents by mesh analysis')
+Vl=sqrt(3)*Vp;
 
-A = ((Y*Z)/2) + 1;
-B = Z;
-C = Y*(((Y*Z)/4) + 1);
-D = A;
+Z = [ (Zs-Zm) -(Zs-Zm) 0
+      0 (Zs-Zm) -(Zs-Zm)
+      1 1 1];
 
-T = [ A B; C D; ]
+V = [ Vl*(cos(pi/6) + 1j*sin(pi/6))
+      Vl*(cos(-pi/2) + 1j*sin(-pi/2))
+      0];
 
-% Calculating sending end voltage and power
+Iabc = Z \ V;
+disp(Iabc)
 
-Is = Ss / Vs;           % Sending current
+% 2. Line currents by symmetric components
+disp('2. Line currents by symmetric components')
+a = cos(2*pi/3)+ 1j*sin(2*pi/3);
 
-Rc = T \ [Vs;Is];
-Vr = Rc(1)              % Received voltage
-Ir = Rc(2);             % Received current
+A = [ 1 1 1; 
+      1 a^2 a; 
+      1 a a^2];
+  
+Z012 = [  Zs+2*Zm 0 0
+          0 Zs-Zm 0
+          0 0 Zs-Zm];
 
-Sr = abs(Vr * Ir)       % Received power in MVA
+V012 = [0; Vp; 0];
+I012 = Z012 \ V012;
 
-% Calculating voltage regulation
-
-R = ((Vs - abs(Vr))/abs(Vr)) * 100 % Voltage regulation
+Iabc = A * I012;
+disp(Iabc)
